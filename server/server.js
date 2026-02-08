@@ -1,15 +1,21 @@
 // server/server.js
 
-// 1. Use 'import' instead of 'require'
-// We point directly to the ESM (EcmaScript Module) file
-import { Server, Origins } from 'boardgame.io/dist/esm/server.js';
-import { DhandhoGame } from './Game.js'; // <--- IMPORTANT: You MUST add '.js' at the end
+// 1. IMPORT THE "CJS" VERSION (The one Node recommended)
+import boardgame from 'boardgame.io/dist/cjs/server.js';
+const { Server, Origins } = boardgame;
+
+// 2. Import your game logic
+// (Ensure Game.js exports using 'export const DhandhoGame = ...')
+import { DhandhoGame } from './Game.js';
 
 const server = Server({
     games: [DhandhoGame],
     origins: [
+        // Allow localhost for testing
         Origins.LOCALHOST,
-        'https://dhandho-v2.vercel.app', // Your Vercel URL
+        // Allow your Vercel frontend
+        'https://dhandho-v2.vercel.app',
+        // Allow everything else (Nuclear option to fix CORS)
         '*'
     ],
 });
