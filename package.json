@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "boardgame.io": "^0.50.2",
+    "socket.io-client": "^4.8.3"
+  }
+}
