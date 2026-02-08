@@ -17,9 +17,10 @@ const CARD_STYLES = {
     // Special Types
     action: { bg: '#FF4500', icon: '⚡', name: 'Action' },
     money: { bg: '#85bb65', icon: '💰', name: 'Cash' },
-    wildcard: { bg: '#9932CC', icon: '🌈', name: 'Wildcard' } // Added just in case
+    wildcard: { bg: '#9932CC', icon: '🌈', name: 'Wildcard' }
 };
 
+// VERIFIED RENT VALUES (Standard Monopoly Deal)
 const RENT_TABLE = {
     brown: ['1M', '2M'],
     lightblue: ['1M', '2M', '3M'],
@@ -29,48 +30,39 @@ const RENT_TABLE = {
     yellow: ['2M', '4M', '6M'],
     green: ['2M', '4M', '7M'],
     blue: ['3M', '8M'],
-    railroad: ['1M', '2M', '4M', '8M'],
+    railroad: ['1M', '2M', '3M', '4M'],
     utility: ['1M', '2M'],
 };
 
 const Card = ({ card }) => {
-    // --- 1. DATA NORMALIZATION (The Fix) ---
-
-    // Convert type to uppercase to be safe (MONEY vs money)
+    // --- DATA CLEANUP ---
     const safeType = (card.type || '').toUpperCase();
-
-    // If Name is missing but it's Money, call it "CASH"
     let displayName = card.name;
-    if (!displayName && safeType === 'MONEY') {
-        displayName = "CASH";
-    }
+    if (!displayName && safeType === 'MONEY') displayName = "CASH";
 
-    // --- 2. SAFETY CHECK ---
-    // If it's still missing a name after our fix, THEN it's corrupt.
+    // --- SAFETY CHECK ---
     if (!displayName) {
-        console.error("⚠️ CORRUPT CARD DETECTED:", card);
         return (
             <div style={{ ...styles.cardContainer, backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' }}>
-                <span style={{ color: 'red', fontWeight: 'bold', fontSize: '10px' }}>ERROR<br />{card.id}</span>
+                <span style={{ color: 'red', fontWeight: 'bold' }}>ERROR</span>
             </div>
         );
     }
 
-    // --- 3. STYLE SELECTION ---
-    // Default to Action style if color is unknown
+    // --- STYLE SELECTION ---
     let style = CARD_STYLES[card.color] || CARD_STYLES.action;
-
-    // OVERRIDES based on Type
     if (safeType === 'MONEY') style = CARD_STYLES.money;
 
-    // OVERRIDES based on Name (Specific Action Cards)
+    // Specific Action Card Icons
     if (displayName === 'Deal Breaker') style = { ...style, icon: '💔', bg: '#800080' };
     if (displayName === 'Just Say No') style = { ...style, icon: '🛑', bg: '#B22222' };
     if (displayName === 'Sly Deal') style = { ...style, icon: '🥷', bg: '#4B0082' };
     if (displayName === 'Forced Deal') style = { ...style, icon: '🤝', bg: '#A52A2A' };
+    if (displayName === 'Debt Collector') style = { ...style, icon: '🤑', bg: '#556B2F' };
+    if (displayName === 'It\'s My Birthday') style = { ...style, icon: '🎂', bg: '#FF1493' };
 
-    // Format Price
-    const priceTag = card.value ? `₹${card.value}M` : 'FREE';
+    // Price Tag (No 'M', just the symbol and number)
+    const priceTag = card.value ? `₹${card.value}` : 'FREE';
 
     return (
         <div style={styles.cardContainer}>
@@ -86,19 +78,21 @@ const Card = ({ card }) => {
                 <div style={styles.emoji}>{style.icon}</div>
             </div>
 
-            {/* RENT TABLE (Properties Only) */}
+            {/* RENT TABLE (Bold & Clear) */}
             {safeType === 'PROPERTY' && RENT_TABLE[card.color] && (
                 <div style={styles.rentContainer}>
                     {RENT_TABLE[card.color].map((rent, i) => (
                         <div key={i} style={styles.rentRow}>
-                            <span style={{ color: '#666' }}>{i + 1} House:</span>
-                            <strong>{rent}</strong>
+                            {/* Left Side: Number of Houses */}
+                            <span style={styles.rentLabel}>{i + 1}</span>
+                            {/* Right Side: Price (BOLDER) */}
+                            <strong style={styles.rentValue}>₹{rent}</strong>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* ACTION DESCRIPTION */}
+            {/* ACTION TEXT */}
             {safeType === 'ACTION' && (
                 <div style={styles.actionText}>
                     {getActionDescription(displayName)}
@@ -127,7 +121,7 @@ const getActionDescription = (name) => {
 const styles = {
     cardContainer: {
         width: '140px',
-        height: '200px',
+        height: '210px', // Slightly taller to fit rent list comfortably
         backgroundColor: '#fff',
         borderRadius: '12px',
         boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
@@ -138,14 +132,14 @@ const styles = {
         flexDirection: 'column',
         border: '1px solid #ddd',
         flexShrink: 0,
-        marginRight: '10px', // Spacing between cards
+        marginRight: '10px',
     },
     header: {
         height: '35px',
         width: '100%',
         display: 'flex',
         alignItems: 'center',
-        paddingLeft: '10px',
+        justifyContent: 'center', // Centered text looks better
         borderBottom: '1px solid rgba(0,0,0,0.1)',
     },
     headerText: {
@@ -154,20 +148,26 @@ const styles = {
         fontSize: '11px',
         letterSpacing: '0.5px',
         textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+        textAlign: 'center',
     },
     priceTag: {
         position: 'absolute',
-        top: '5px',
-        right: '5px',
+        top: '6px',
+        right: '6px',
         backgroundColor: '#fff',
         color: '#333',
-        fontWeight: 'bold',
-        fontSize: '12px',
+        fontWeight: '900', // Extra Bold
+        fontSize: '14px',  // Slightly Larger
         padding: '2px 6px',
-        borderRadius: '10px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        borderRadius: '50%', // Circular look
+        width: '24px',
+        height: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
         zIndex: 10,
-        border: '1px solid #ccc',
+        border: '2px solid #333',
     },
     artContainer: {
         flex: 1,
@@ -177,31 +177,48 @@ const styles = {
         backgroundColor: '#f9f9f9',
     },
     emoji: {
-        fontSize: '50px',
-        textShadow: '0 4px 4px rgba(0,0,0,0.1)',
+        fontSize: '55px',
+        filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.1))',
     },
     rentContainer: {
-        padding: '8px',
+        padding: '8px 12px',
         backgroundColor: '#fff',
-        borderTop: '1px solid #eee',
-        fontSize: '10px',
+        borderTop: '2px solid #eee',
+        fontSize: '11px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        minHeight: '60px',
     },
     rentRow: {
         display: 'flex',
         justifyContent: 'space-between',
-        marginBottom: '2px',
+        alignItems: 'center',
+        marginBottom: '3px',
+        borderBottom: '1px dotted #eee',
+    },
+    rentLabel: {
+        color: '#555',
+        fontSize: '11px',
+        fontWeight: 'bold',
+    },
+    rentValue: {
+        color: '#000',
+        fontSize: '13px', // Larger Value
+        fontWeight: '900', // Max Boldness
     },
     actionText: {
         padding: '10px',
-        fontSize: '11px',
-        color: '#555',
+        fontSize: '12px',
+        color: '#444',
         textAlign: 'center',
-        fontStyle: 'italic',
+        fontWeight: '500',
         backgroundColor: '#fff',
         height: '60px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        lineHeight: '1.4',
     }
 };
 
