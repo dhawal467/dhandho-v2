@@ -2,10 +2,17 @@ import React from 'react';
 import Card from './Card';
 
 const PlayerZone = ({ player, isCurrentPlayer }) => {
-    // 1. Group Properties by Color (e.g., all Red cards together)
-    const properties = player.properties || [];
-    const groupedProps = {};
+    // --- SAFETY FIX START ---
+    // If player is undefined, return a placeholder (don't crash)
+    if (!player) return <div style={styles.container(false)}>Waiting for player...</div>;
 
+    // If properties/bank are missing, default to empty arrays []
+    const properties = player.properties || [];
+    const bank = player.bank || [];
+    // --- SAFETY FIX END ---
+
+    // 1. Group Properties by Color
+    const groupedProps = {};
     properties.forEach(card => {
         const color = card.color || 'misc';
         if (!groupedProps[color]) groupedProps[color] = [];
@@ -14,22 +21,22 @@ const PlayerZone = ({ player, isCurrentPlayer }) => {
 
     return (
         <div style={styles.container(isCurrentPlayer)}>
-            {/* HEADER: Name & Money Count */}
+            {/* HEADER */}
             <div style={styles.header}>
                 <span style={styles.playerName}>
                     {isCurrentPlayer ? "YOU" : "OPPONENT"}
                 </span>
                 <div style={styles.bankSummary}>
-                    💰 Bank: ₹{calculateBankTotal(player.bank)}M
+                    💰 Bank: ₹{calculateBankTotal(bank)}M
                 </div>
             </div>
 
-            {/* ZONE 1: THE BANK (Money Cards) */}
+            {/* ZONE 1: THE BANK */}
             <div style={styles.bankZone}>
                 <span style={styles.zoneLabel}>BANK</span>
                 <div style={styles.cardRow}>
-                    {player.bank.map((card, i) => (
-                        // Small overlap for bank cards to save space
+                    {bank.length === 0 && <span style={styles.emptyText}>Empty Bank</span>}
+                    {bank.map((card, i) => (
                         <div key={i} style={{ marginRight: '-100px', zIndex: i }}>
                             <Card card={card} />
                         </div>
@@ -37,14 +44,15 @@ const PlayerZone = ({ player, isCurrentPlayer }) => {
                 </div>
             </div>
 
-            {/* ZONE 2: PROPERTIES (Grouped by Color) */}
+            {/* ZONE 2: PROPERTIES */}
             <div style={styles.propertyZone}>
                 <span style={styles.zoneLabel}>PROPERTIES</span>
+                {properties.length === 0 && <span style={styles.emptyText}>No Properties Built</span>}
+
                 <div style={styles.setsContainer}>
                     {Object.keys(groupedProps).map(color => (
                         <div key={color} style={styles.column}>
                             {groupedProps[color].map((card, i) => (
-                                // Stack cards vertically (margin-top: -160px)
                                 <div key={i} style={{ marginTop: i > 0 ? '-160px' : '0', zIndex: i }}>
                                     <Card card={card} />
                                 </div>
@@ -59,67 +67,84 @@ const PlayerZone = ({ player, isCurrentPlayer }) => {
 
 // Helper: Count total money
 const calculateBankTotal = (bank) => {
+    if (!bank) return 0;
     return bank.reduce((total, card) => total + (card.value || 0), 0);
 };
 
 const styles = {
     container: (isMe) => ({
         padding: '10px',
-        backgroundColor: isMe ? '#e6fffa' : '#fff5f5', // Green tint for me, Red for opponent
+        backgroundColor: isMe ? '#e6fffa' : '#fff5f5',
         borderRadius: '10px',
-        marginBottom: '20px',
+        marginBottom: '10px', // Reduced margin
         border: isMe ? '2px solid #38b2ac' : '2px solid #fc8181',
-        minHeight: '200px',
+        minHeight: '150px', // Reduced height
+        display: 'flex',
+        flexDirection: 'column',
     }),
     header: {
         display: 'flex',
         justifyContent: 'space-between',
-        marginBottom: '10px',
+        marginBottom: '5px',
         fontWeight: 'bold',
-        fontSize: '14px',
+        fontSize: '12px',
+        textTransform: 'uppercase',
+        color: '#4a5568',
     },
     playerName: {
-        fontSize: '18px',
-        textTransform: 'uppercase',
+        fontSize: '14px',
+        fontWeight: '900',
     },
     bankSummary: {
         backgroundColor: '#fff',
-        padding: '4px 8px',
-        borderRadius: '5px',
+        padding: '2px 6px',
+        borderRadius: '4px',
         boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+        fontSize: '12px',
     },
     bankZone: {
-        marginBottom: '15px',
+        marginBottom: '10px',
         padding: '5px',
-        borderBottom: '1px dashed #ccc',
-        overflowX: 'auto',
+        borderBottom: '1px dashed rgba(0,0,0,0.1)',
+        minHeight: '80px', // Ensure height for cards
     },
     cardRow: {
         display: 'flex',
-        paddingBottom: '10px',
-        minHeight: '220px', // Height of one card
+        alignItems: 'center',
+        paddingLeft: '5px',
+        overflowX: 'auto',
+        minHeight: '100px',
     },
     propertyZone: {
-        minHeight: '250px',
+        flex: 1,
+        minHeight: '120px',
+        position: 'relative',
     },
     setsContainer: {
         display: 'flex',
-        gap: '15px',
+        gap: '10px',
         overflowX: 'auto',
-        paddingBottom: '20px',
+        paddingBottom: '10px',
+        paddingLeft: '5px',
     },
     column: {
         display: 'flex',
         flexDirection: 'column',
-        minWidth: '140px', // Width of one card
+        minWidth: '100px',
     },
     zoneLabel: {
-        fontSize: '10px',
-        color: '#718096',
+        fontSize: '9px',
+        color: '#a0aec0',
         fontWeight: 'bold',
         letterSpacing: '1px',
         marginBottom: '5px',
         display: 'block',
+    },
+    emptyText: {
+        fontSize: '11px',
+        color: '#cbd5e0',
+        fontStyle: 'italic',
+        padding: '10px',
     }
 };
 
