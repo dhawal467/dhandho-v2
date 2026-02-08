@@ -2,6 +2,7 @@ import React from 'react';
 
 // --- 1. CONFIGURATION ---
 const CARD_STYLES = {
+    // Property Colors
     brown: { bg: '#8B4513', icon: '🛖', name: 'Brown Set' },
     lightblue: { bg: '#87CEEB', icon: '🥥', name: 'Light Blue' },
     pink: { bg: '#FF69B4', icon: '🎀', name: 'Pink Set' },
@@ -12,8 +13,11 @@ const CARD_STYLES = {
     blue: { bg: '#00008B', icon: '💎', name: 'Blue Set' },
     railroad: { bg: '#000000', icon: '🚂', name: 'Railroad' },
     utility: { bg: '#A9A9A9', icon: '⚡', name: 'Utility' },
+
+    // Special Types
     action: { bg: '#FF4500', icon: '⚡', name: 'Action' },
     money: { bg: '#85bb65', icon: '💰', name: 'Cash' },
+    wildcard: { bg: '#9932CC', icon: '🌈', name: 'Wildcard' } // Added just in case
 };
 
 const RENT_TABLE = {
@@ -30,43 +34,60 @@ const RENT_TABLE = {
 };
 
 const Card = ({ card }) => {
-    // --- SAFETY CHECK START ---
-    // If the card is empty or missing a name, do not crash.
-    if (!card || !card.name) {
+    // --- 1. DATA NORMALIZATION (The Fix) ---
+
+    // Convert type to uppercase to be safe (MONEY vs money)
+    const safeType = (card.type || '').toUpperCase();
+
+    // If Name is missing but it's Money, call it "CASH"
+    let displayName = card.name;
+    if (!displayName && safeType === 'MONEY') {
+        displayName = "CASH";
+    }
+
+    // --- 2. SAFETY CHECK ---
+    // If it's still missing a name after our fix, THEN it's corrupt.
+    if (!displayName) {
         console.error("⚠️ CORRUPT CARD DETECTED:", card);
         return (
             <div style={{ ...styles.cardContainer, backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' }}>
-                <span style={{ color: 'red', fontWeight: 'bold' }}>ERROR</span>
+                <span style={{ color: 'red', fontWeight: 'bold', fontSize: '10px' }}>ERROR<br />{card.id}</span>
             </div>
         );
     }
-    // --- SAFETY CHECK END ---
 
-    // Safe Access: If color is missing, default to 'action'
+    // --- 3. STYLE SELECTION ---
+    // Default to Action style if color is unknown
     let style = CARD_STYLES[card.color] || CARD_STYLES.action;
 
-    // Overrides
-    if (card.type === 'money') style = CARD_STYLES.money;
-    if (card.name === 'Deal Breaker') style = { ...style, icon: '💔', bg: '#800080' };
-    if (card.name === 'Just Say No') style = { ...style, icon: '🛑', bg: '#B22222' };
+    // OVERRIDES based on Type
+    if (safeType === 'MONEY') style = CARD_STYLES.money;
 
-    // Safe formatting for name and value
-    const cardName = card.name ? card.name.toUpperCase() : "UNKNOWN";
+    // OVERRIDES based on Name (Specific Action Cards)
+    if (displayName === 'Deal Breaker') style = { ...style, icon: '💔', bg: '#800080' };
+    if (displayName === 'Just Say No') style = { ...style, icon: '🛑', bg: '#B22222' };
+    if (displayName === 'Sly Deal') style = { ...style, icon: '🥷', bg: '#4B0082' };
+    if (displayName === 'Forced Deal') style = { ...style, icon: '🤝', bg: '#A52A2A' };
+
+    // Format Price
     const priceTag = card.value ? `₹${card.value}M` : 'FREE';
 
     return (
         <div style={styles.cardContainer}>
             <div style={styles.priceTag}>{priceTag}</div>
 
+            {/* HEADER */}
             <div style={{ ...styles.header, backgroundColor: style.bg }}>
-                <span style={styles.headerText}>{cardName}</span>
+                <span style={styles.headerText}>{displayName.toUpperCase()}</span>
             </div>
 
+            {/* ICON */}
             <div style={styles.artContainer}>
                 <div style={styles.emoji}>{style.icon}</div>
             </div>
 
-            {card.type === 'property' && RENT_TABLE[card.color] && (
+            {/* RENT TABLE (Properties Only) */}
+            {safeType === 'PROPERTY' && RENT_TABLE[card.color] && (
                 <div style={styles.rentContainer}>
                     {RENT_TABLE[card.color].map((rent, i) => (
                         <div key={i} style={styles.rentRow}>
@@ -77,9 +98,10 @@ const Card = ({ card }) => {
                 </div>
             )}
 
-            {card.type === 'action' && (
+            {/* ACTION DESCRIPTION */}
+            {safeType === 'ACTION' && (
                 <div style={styles.actionText}>
-                    {getActionDescription(card.name)}
+                    {getActionDescription(displayName)}
                 </div>
             )}
         </div>
@@ -87,8 +109,19 @@ const Card = ({ card }) => {
 };
 
 const getActionDescription = (name) => {
-    // ... (Same as before)
-    return 'Play to use effect.';
+    const desc = {
+        'Deal Breaker': 'Steal a complete set.',
+        'Just Say No': 'Cancel any action.',
+        'Sly Deal': 'Steal a single property.',
+        'Forced Deal': 'Swap properties.',
+        'Debt Collector': 'Force player to pay 5M.',
+        'It\'s My Birthday': 'All players pay 2M.',
+        'Pass Go': 'Draw 2 extra cards.',
+        'Double The Rent': 'Double rent price.',
+        'House': 'Add 3M to rent.',
+        'Hotel': 'Add 4M to rent.',
+    };
+    return desc[name] || 'Play to use effect.';
 };
 
 const styles = {
@@ -104,7 +137,8 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         border: '1px solid #ddd',
-        flexShrink: 0, // IMPORTANT: Prevents cards from squishing
+        flexShrink: 0,
+        marginRight: '10px', // Spacing between cards
     },
     header: {
         height: '35px',
