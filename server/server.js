@@ -1,7 +1,8 @@
 // server/server.js
 
 // 1. Use 'import' instead of 'require'
-import { Server, Origins } from 'boardgame.io/server';
+// We point directly to the ESM (EcmaScript Module) file
+import { Server, Origins } from 'boardgame.io/dist/esm/server.js';
 import { DhandhoGame } from './Game.js'; // <--- IMPORTANT: You MUST add '.js' at the end
 
 const server = Server({
