@@ -2,28 +2,33 @@ import React from 'react';
 import { Client } from 'boardgame.io/react';
 import { SocketIO } from 'boardgame.io/multiplayer';
 import { DhandhoGame } from './Game';
-import Card from './components/Card'; // <--- IMPORT YOUR NEW COMPONENT
+import Card from './components/Card';
+import PlayerZone from './components/PlayerZone'; // <--- IMPORT NEW COMPONENT
 
-// 1. The Visual Game Board
 const DhandhoBoard = ({ ctx, G, moves, playerID }) => {
   const isMyTurn = ctx.currentPlayer === playerID;
-  const myPlayer = G.players[playerID]; // Get my specific data
+  const myPlayerID = playerID;
+  const opponentID = playerID === '0' ? '1' : '0';
 
-  // Safety Check: If we are a spectator or loading, don't crash
-  if (!myPlayer) return <div>Spectating...</div>;
+  // Get Player Objects (Safety Check)
+  const myPlayer = G.players[myPlayerID];
+  const opponent = G.players[opponentID];
+
+  if (!myPlayer || !opponent) return <div>Connecting to Match...</div>;
 
   return (
     <div style={styles.boardContainer}>
-      {/* HEADER: Game Status */}
-      <div style={styles.header}>
-        <h1>Dhandho V2</h1>
-        <div style={styles.statusBadge(isMyTurn)}>
-          {isMyTurn ? "🟢 YOUR TURN" : `🔴 Player ${ctx.currentPlayer}'s Turn`}
-        </div>
+
+      {/* --- TOP: OPPONENT'S AREA --- */}
+      <div style={styles.section}>
+        <PlayerZone player={opponent} isCurrentPlayer={false} />
       </div>
 
-      {/* ACTION BAR: Buttons */}
-      <div style={styles.actionBar}>
+      {/* --- MIDDLE: GAME INFO --- */}
+      <div style={styles.middleBar}>
+        <div style={styles.statusBadge(isMyTurn)}>
+          {isMyTurn ? "🟢 YOUR TURN" : "🔴 OPPONENT'S TURN"}
+        </div>
         <button
           onClick={() => moves.endTurn()}
           disabled={!isMyTurn}
@@ -33,84 +38,94 @@ const DhandhoBoard = ({ ctx, G, moves, playerID }) => {
         </button>
       </div>
 
-      {/* GAME AREA: My Hand */}
-      <div style={styles.handContainer}>
-        <h3>My Hand ({myPlayer.hand.length} Cards)</h3>
+      {/* --- BOTTOM: MY AREA --- */}
+      <div style={styles.section}>
+        <PlayerZone player={myPlayer} isCurrentPlayer={true} />
 
-        {/* THE NEW PART: Render Card Components instead of text */}
-        <div style={styles.cardList}>
-          {myPlayer.hand.map((card, index) => (
-            // We pass the card data into your new component
-            <Card key={index} card={card} />
-          ))}
+        {/* MY HAND (Separate from Played Cards) */}
+        <div style={styles.handContainer}>
+          <h3 style={{ color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
+            MY HAND
+          </h3>
+          <div style={styles.cardList}>
+            {myPlayer.hand.map((card, index) => (
+              <div key={index} style={{ marginRight: '-60px', transition: 'transform 0.2s' }}>
+                <Card card={card} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
     </div>
   );
 };
 
-// 2. Simple Styles for the Board Layout
 const styles = {
   boardContainer: {
-    padding: '20px',
+    padding: '10px',
     fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f0f2f5',
+    backgroundColor: '#2d3748', // Dark Table Background
     minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
   },
-  header: {
+  section: {
+    // Flex creates space for zones
+  },
+  middleBar: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '20px',
+    padding: '10px',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: '8px',
   },
   statusBadge: (active) => ({
-    padding: '10px 20px',
+    padding: '8px 16px',
     borderRadius: '20px',
-    backgroundColor: active ? '#e6fffa' : '#fff5f5',
-    color: active ? '#2c7a7b' : '#c53030',
-    fontWeight: 'bold',
-    border: `1px solid ${active ? '#2c7a7b' : '#c53030'}`,
-  }),
-  actionBar: {
-    marginBottom: '30px',
-    padding: '10px',
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  button: (active) => ({
-    padding: '12px 24px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    backgroundColor: active ? '#3182ce' : '#cbd5e0',
+    backgroundColor: active ? '#48bb78' : '#f56565',
     color: 'white',
+    fontWeight: 'bold',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+  }),
+  button: (active) => ({
+    padding: '10px 24px',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    backgroundColor: active ? '#ecc94b' : '#a0aec0',
+    color: active ? '#000' : '#4a5568',
     border: 'none',
     borderRadius: '6px',
     cursor: active ? 'pointer' : 'not-allowed',
+    boxShadow: active ? '0 4px 0 #d69e2e' : 'none',
   }),
   handContainer: {
-    marginTop: '20px',
+    marginTop: '10px',
+    padding: '10px',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: '10px',
+    overflowX: 'auto',
   },
   cardList: {
     display: 'flex',
-    gap: '10px',        // Space between cards
-    overflowX: 'auto',  // Scroll sideways if hand is full
-    paddingBottom: '20px', // Space for scrollbar
-    alignItems: 'center',
+    paddingBottom: '10px',
+    paddingLeft: '10px',
+    minHeight: '220px',
   }
 };
 
-// 3. Connection Setup (Same as before)
 const { hostname } = window.location;
 const SERVER_URL = hostname === 'localhost'
   ? 'http://localhost:8000'
-  : 'https://dhandho-v2-server.onrender.com'; // <--- CHECK THIS URL MATCHES YOURS
+  : 'https://dhandho-v2-server.onrender.com';
 
 const GameClient = Client({
   game: DhandhoGame,
   board: DhandhoBoard,
   multiplayer: SocketIO({ server: SERVER_URL }),
-  debug: true,
+  debug: false, // Turn off debug panel to see full UI
 });
 
 const App = () => (
