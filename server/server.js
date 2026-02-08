@@ -1,11 +1,16 @@
-const { Server, Origins } = require('boardgame.io/server');
-const { DhandhoGame } = require('./Game');
+// server/server.js
+
+// 1. Use 'import' instead of 'require'
+import { Server, Origins } from 'boardgame.io/server';
+import { DhandhoGame } from './Game.js'; // <--- IMPORTANT: You MUST add '.js' at the end
 
 const server = Server({
     games: [DhandhoGame],
-    // This allows connection from ANYWHERE (Vercel, Localhost, etc.)
-    // We use this for the initial test to prevent CORS errors.
-    origins: [Origins.LOCALHOST, 'https://dhandho-v2.vercel.app', '*'],
+    origins: [
+        Origins.LOCALHOST,
+        'https://dhandho-v2.vercel.app', // Your Vercel URL
+        '*'
+    ],
 });
 
 const PORT = process.env.PORT || 8000;
