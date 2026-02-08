@@ -2,18 +2,34 @@ import React from 'react';
 import Card from './Card';
 
 const PlayerZone = ({ player, isCurrentPlayer }) => {
-    // --- SAFETY FIX START ---
-    // If player is undefined, return a placeholder (don't crash)
-    if (!player) return <div style={styles.container(false)}>Waiting for player...</div>;
+    // --- BULLETPROOF SAFETY CHECKS ---
 
-    // If properties/bank are missing, default to empty arrays []
-    const properties = player.properties || [];
-    const bank = player.bank || [];
-    // --- SAFETY FIX END ---
+    // 1. If player doesn't exist, show loading
+    if (!player) {
+        return <div style={styles.container(false)}>Waiting for data...</div>;
+    }
 
-    // 1. Group Properties by Color
+    // 2. Force Properties to be an Array
+    // If it's undefined, null, or NOT an array, make it empty []
+    let properties = player.properties;
+    if (!Array.isArray(properties)) {
+        properties = [];
+    }
+
+    // 3. Force Bank to be an Array
+    let bank = player.bank;
+    if (!Array.isArray(bank)) {
+        bank = [];
+    }
+
+    // --- LOGIC ---
+
+    // Group Properties by Color
     const groupedProps = {};
     properties.forEach(card => {
+        // Safety check for card itself
+        if (!card) return;
+
         const color = card.color || 'misc';
         if (!groupedProps[color]) groupedProps[color] = [];
         groupedProps[color].push(card);
@@ -67,18 +83,19 @@ const PlayerZone = ({ player, isCurrentPlayer }) => {
 
 // Helper: Count total money
 const calculateBankTotal = (bank) => {
-    if (!bank) return 0;
+    if (!Array.isArray(bank)) return 0;
     return bank.reduce((total, card) => total + (card.value || 0), 0);
 };
 
+// --- STYLES ---
 const styles = {
     container: (isMe) => ({
         padding: '10px',
         backgroundColor: isMe ? '#e6fffa' : '#fff5f5',
         borderRadius: '10px',
-        marginBottom: '10px', // Reduced margin
+        marginBottom: '10px',
         border: isMe ? '2px solid #38b2ac' : '2px solid #fc8181',
-        minHeight: '150px', // Reduced height
+        minHeight: '150px',
         display: 'flex',
         flexDirection: 'column',
     }),
@@ -106,7 +123,7 @@ const styles = {
         marginBottom: '10px',
         padding: '5px',
         borderBottom: '1px dashed rgba(0,0,0,0.1)',
-        minHeight: '80px', // Ensure height for cards
+        minHeight: '80px',
     },
     cardRow: {
         display: 'flex',
