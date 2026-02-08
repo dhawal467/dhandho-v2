@@ -8,8 +8,8 @@ const TestBoard = ({ ctx, moves }) => (
   <div style={{ padding: 50, textAlign: 'center' }}>
     <h1>Dhandho V2: Connection Successful</h1>
     <p>Player: {ctx.currentPlayer}</p>
-    <button onClick={() => moves.DrawCard()} style={{ fontSize: 20, padding: 20 }}>
-      DRAW CARD
+    <button onClick={() => moves.endTurn()} style={{ fontSize: 20, padding: 20 }}>
+      END TURN
     </button>
   </div>
 );
