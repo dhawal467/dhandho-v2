@@ -1,5 +1,4 @@
 // client/src/Game.js
-
 export const DhandhoGame = {
     name: 'dhandho',
 
@@ -9,7 +8,7 @@ export const DhandhoGame = {
             { id: 'delhi', name: 'Delhi', type: 'PROPERTY', color: 'red', value: 3 },
             { id: 'bangalore', name: 'Bangalore', type: 'PROPERTY', color: 'yellow', value: 3 },
             { id: 'indranagar', name: 'Indranagar', type: 'PROPERTY', color: 'blue', value: 4 },
-            { id: 'rickshaw', name: 'Rickshaw', type: 'PROPERTY', color: 'black', value: 2 }, // Added Rickshaw for testing
+            { id: 'rickshaw', name: 'Rickshaw', type: 'PROPERTY', color: 'black', value: 2 },
             { id: 'money_5m', name: 'Cash', type: 'MONEY', value: 5 },
             { id: 'deal_breaker', name: 'Deal Breaker', type: 'ACTION', value: 5 },
         ],
@@ -34,48 +33,53 @@ export const DhandhoGame = {
 
     moves: {
         playMoney: (G, ctx, cardIndex) => {
+            // --- SAFETY SHIELD START ---
+            if (!ctx || !ctx.currentPlayer) {
+                console.error("⛔ CRITICAL: CTX is missing in playMoney!", { G, ctx, cardIndex });
+                return;
+            }
+            // --- SAFETY SHIELD END ---
+
             const playerID = ctx.currentPlayer;
             const player = G.players[playerID];
 
-            // SAFETY 1: Check if player exists
-            if (!player) { console.error("Player not found!"); return; }
+            if (!player) return;
 
-            // SAFETY 2: Check if card exists
             const card = player.hand[cardIndex];
-            if (!card) { console.error("Card not found at index", cardIndex); return; }
+            if (!card) { console.error("Card not found"); return; }
 
-            // SAFETY 3: Initialize bank if missing
             if (!Array.isArray(player.bank)) player.bank = [];
 
-            // EXECUTE
             player.hand.splice(cardIndex, 1);
             player.bank.push(card);
         },
 
         playProperty: (G, ctx, cardIndex) => {
+            // --- SAFETY SHIELD START ---
+            if (!ctx || !ctx.currentPlayer) {
+                console.error("⛔ CRITICAL: CTX is missing in playProperty!", { G, ctx, cardIndex });
+                return;
+            }
+            // --- SAFETY SHIELD END ---
+
             const playerID = ctx.currentPlayer;
             const player = G.players[playerID];
 
-            // SAFETY 1
-            if (!player) { console.error("Player not found!"); return; }
+            if (!player) return;
 
-            // SAFETY 2
             const card = player.hand[cardIndex];
-            if (!card) { console.error("Card not found at index", cardIndex); return; }
+            if (!card) { console.error("Card not found"); return; }
 
-            // SAFETY 3: Initialize properties if missing
             if (!Array.isArray(player.properties)) player.properties = [];
 
-            // EXECUTE
             player.hand.splice(cardIndex, 1);
             player.properties.push(card);
         },
 
         playAction: (G, ctx, cardIndex) => {
-            const playerID = ctx.currentPlayer;
-            const player = G.players[playerID];
-
-            if (!player || !player.hand[cardIndex]) return;
+            if (!ctx) return;
+            const player = G.players[ctx.currentPlayer];
+            if (!player) return;
 
             const card = player.hand[cardIndex];
             player.hand.splice(cardIndex, 1);
@@ -83,6 +87,7 @@ export const DhandhoGame = {
         },
 
         drawCard: (G, ctx) => {
+            if (!ctx) return;
             if (G.deck.length > 0) {
                 const card = G.deck.pop();
                 G.players[ctx.currentPlayer].hand.push(card);
@@ -90,7 +95,7 @@ export const DhandhoGame = {
         },
 
         endTurn: (ctx) => {
-            ctx.events.endTurn();
+            if (ctx && ctx.events) ctx.events.endTurn();
         },
     },
 
