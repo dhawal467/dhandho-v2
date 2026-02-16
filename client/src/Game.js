@@ -1,4 +1,5 @@
 // client/src/Game.js
+
 export const DhandhoGame = {
     name: 'dhandho',
 
@@ -6,11 +7,8 @@ export const DhandhoGame = {
         deck: [
             { id: 'mumbai', name: 'Mumbai', type: 'PROPERTY', color: 'green', value: 4 },
             { id: 'delhi', name: 'Delhi', type: 'PROPERTY', color: 'red', value: 3 },
-            { id: 'bangalore', name: 'Bangalore', type: 'PROPERTY', color: 'yellow', value: 3 },
             { id: 'indranagar', name: 'Indranagar', type: 'PROPERTY', color: 'blue', value: 4 },
-            { id: 'rickshaw', name: 'Rickshaw', type: 'PROPERTY', color: 'black', value: 2 },
             { id: 'money_5m', name: 'Cash', type: 'MONEY', value: 5 },
-            { id: 'deal_breaker', name: 'Deal Breaker', type: 'ACTION', value: 5 },
         ],
         discardPile: [],
         players: {
@@ -23,79 +21,93 @@ export const DhandhoGame = {
                 bank: [],
                 properties: []
             },
-            '1': {
-                hand: [],
-                bank: [],
-                properties: []
-            }
+            '1': { hand: [], bank: [], properties: [] }
         }
     }),
 
     moves: {
         playMoney: (G, ctx, cardIndex) => {
-            // --- SAFETY SHIELD START ---
-            if (!ctx || !ctx.currentPlayer) {
-                console.error("⛔ CRITICAL: CTX is missing in playMoney!", { G, ctx, cardIndex });
-                return;
-            }
-            // --- SAFETY SHIELD END ---
+            console.log("--- DEBUG playMoney ---");
+            console.log("Arg 1 (G):", G);
+            console.log("Arg 2 (ctx):", ctx);
+            console.log("Arg 3 (cardIndex):", cardIndex);
 
-            const playerID = ctx.currentPlayer;
-            const player = G.players[playerID];
+            if (!G) { console.error("G is missing!"); return; }
+            if (!ctx) { console.error("CTX is missing!"); return; }
 
-            if (!player) return;
-
+            const player = G.players[ctx.currentPlayer];
             const card = player.hand[cardIndex];
-            if (!card) { console.error("Card not found"); return; }
 
-            if (!Array.isArray(player.bank)) player.bank = [];
+            // Initialize if missing
+            if (!player.bank) player.bank = [];
 
             player.hand.splice(cardIndex, 1);
             player.bank.push(card);
         },
 
         playProperty: (G, ctx, cardIndex) => {
-            // --- SAFETY SHIELD START ---
-            if (!ctx || !ctx.currentPlayer) {
-                console.error("⛔ CRITICAL: CTX is missing in playProperty!", { G, ctx, cardIndex });
+            console.log("--- DEBUG playProperty ---");
+            console.log("Arg 1 (G):", G);
+            console.log("Arg 2 (ctx):", ctx);
+            console.log("Arg 3 (cardIndex):", cardIndex);
+
+            // --- CRITICAL FIX ATTEMPT ---
+            // Sometimes frameworks pass (G, ctx) and sometimes (ctx) is merged?
+            // We will check if 'ctx' is actually inside 'G' or if arguments are shifted.
+
+            let safeCtx = ctx;
+            let safeG = G;
+
+            // Check if G is actually the context (Argument Shift)
+            if (G && G.currentPlayer && !ctx) {
+                console.warn("⚠️ Arguments seem shifted! G is acting as CTX.");
+                safeCtx = G;
+                safeG = undefined; // This would be bad
+            }
+
+            if (!safeCtx) {
+                console.error("⛔ CTX IS DEAD. Cannot proceed.");
                 return;
             }
-            // --- SAFETY SHIELD END ---
 
-            const playerID = ctx.currentPlayer;
-            const player = G.players[playerID];
+            const playerID = safeCtx.currentPlayer;
+            const player = safeG.players[playerID];
 
-            if (!player) return;
+            if (!player) { console.error("Player not found for ID:", playerID); return; }
+
+            // SAFETY: Check card
+            if (cardIndex === undefined || cardIndex === null) {
+                console.error("Card Index is missing!");
+                return;
+            }
 
             const card = player.hand[cardIndex];
-            if (!card) { console.error("Card not found"); return; }
+            if (!card) {
+                console.error("Card is undefined at index:", cardIndex);
+                return;
+            }
 
-            if (!Array.isArray(player.properties)) player.properties = [];
-
+            // EXECUTE
+            if (!player.properties) player.properties = [];
             player.hand.splice(cardIndex, 1);
             player.properties.push(card);
+            console.log("✅ Moved card to Property Zone");
         },
 
         playAction: (G, ctx, cardIndex) => {
-            if (!ctx) return;
             const player = G.players[ctx.currentPlayer];
-            if (!player) return;
-
             const card = player.hand[cardIndex];
             player.hand.splice(cardIndex, 1);
             G.discardPile.push(card);
         },
 
         drawCard: (G, ctx) => {
-            if (!ctx) return;
-            if (G.deck.length > 0) {
-                const card = G.deck.pop();
-                G.players[ctx.currentPlayer].hand.push(card);
-            }
+            const card = G.deck.pop();
+            G.players[ctx.currentPlayer].hand.push(card);
         },
 
         endTurn: (ctx) => {
-            if (ctx && ctx.events) ctx.events.endTurn();
+            ctx.events.endTurn();
         },
     },
 
