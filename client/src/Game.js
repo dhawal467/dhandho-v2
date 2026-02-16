@@ -29,41 +29,49 @@ export const DhandhoGame = {
     }),
 
     moves: {
-        // NOTICE THE CURLY BRACES { G, ctx }
         playMoney: ({ G, ctx }, cardIndex) => {
-            const playerID = ctx.currentPlayer;
-            const player = G.players[playerID];
-
-            // Safety check
+            const player = G.players[ctx.currentPlayer];
             if (!player) return;
 
             const card = player.hand[cardIndex];
-            // Ensure bank exists
-            if (!player.bank) player.bank = [];
 
-            // Execute Move
+            // --- FORCE ARRAY TYPE ---
+            if (!Array.isArray(player.bank)) {
+                player.bank = [];
+            }
+
             player.hand.splice(cardIndex, 1);
             player.bank.push(card);
         },
 
         playProperty: ({ G, ctx }, cardIndex) => {
-            const playerID = ctx.currentPlayer;
-            const player = G.players[playerID];
-
+            const player = G.players[ctx.currentPlayer];
             if (!player) return;
 
             const card = player.hand[cardIndex];
-            // Ensure properties exists
-            if (!player.properties) player.properties = [];
 
-            // Execute Move
+            // --- FORCE ARRAY TYPE ---
+            // This fixes "properties.push is not a function"
+            if (!Array.isArray(player.properties)) {
+                console.warn("⚠️ Fixed corrupted properties array");
+                player.properties = [];
+            }
+
             player.hand.splice(cardIndex, 1);
             player.properties.push(card);
         },
 
         playAction: ({ G, ctx }, cardIndex) => {
             const player = G.players[ctx.currentPlayer];
+            if (!player) return;
+
             const card = player.hand[cardIndex];
+
+            // Force discardPile array
+            if (!Array.isArray(G.discardPile)) {
+                G.discardPile = [];
+            }
+
             player.hand.splice(cardIndex, 1);
             G.discardPile.push(card);
         },
