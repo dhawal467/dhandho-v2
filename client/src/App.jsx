@@ -293,15 +293,22 @@ const SERVER_URL = hostname === 'localhost'
   ? 'http://localhost:8000'
   : 'https://dhandho-v2-server.onrender.com';
 
+// ... (imports remain the same)
+
 const GameClient = Client({
   game: DhandhoGame,
   board: DhandhoBoard,
   multiplayer: SocketIO({ server: SERVER_URL }),
-  debug: false,
+  debug: true, // <--- ENABLE THIS (Adds a Sidebar to inspect state)
 });
 
-const App = () => (
-  <GameClient matchID="default" playerID="0" />
-);
+const App = () => {
+  // Generate a random ID so every refresh is a new game
+  const matchID = 'test-match-' + Math.floor(Math.random() * 10000);
+
+  return (
+    <GameClient matchID={matchID} playerID="0" />
+  );
+};
 
 export default App;
