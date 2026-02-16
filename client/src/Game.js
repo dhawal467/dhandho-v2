@@ -7,8 +7,11 @@ export const DhandhoGame = {
         deck: [
             { id: 'mumbai', name: 'Mumbai', type: 'PROPERTY', color: 'green', value: 4 },
             { id: 'delhi', name: 'Delhi', type: 'PROPERTY', color: 'red', value: 3 },
+            { id: 'bangalore', name: 'Bangalore', type: 'PROPERTY', color: 'yellow', value: 3 },
             { id: 'indranagar', name: 'Indranagar', type: 'PROPERTY', color: 'blue', value: 4 },
+            { id: 'rickshaw', name: 'Rickshaw', type: 'PROPERTY', color: 'black', value: 2 },
             { id: 'money_5m', name: 'Cash', type: 'MONEY', value: 5 },
+            { id: 'deal_breaker', name: 'Deal Breaker', type: 'ACTION', value: 5 },
         ],
         discardPile: [],
         players: {
@@ -26,88 +29,54 @@ export const DhandhoGame = {
     }),
 
     moves: {
-        playMoney: (G, ctx, cardIndex) => {
-            console.log("--- DEBUG playMoney ---");
-            console.log("Arg 1 (G):", G);
-            console.log("Arg 2 (ctx):", ctx);
-            console.log("Arg 3 (cardIndex):", cardIndex);
+        // NOTICE THE CURLY BRACES { G, ctx }
+        playMoney: ({ G, ctx }, cardIndex) => {
+            const playerID = ctx.currentPlayer;
+            const player = G.players[playerID];
 
-            if (!G) { console.error("G is missing!"); return; }
-            if (!ctx) { console.error("CTX is missing!"); return; }
+            // Safety check
+            if (!player) return;
 
-            const player = G.players[ctx.currentPlayer];
             const card = player.hand[cardIndex];
-
-            // Initialize if missing
+            // Ensure bank exists
             if (!player.bank) player.bank = [];
 
+            // Execute Move
             player.hand.splice(cardIndex, 1);
             player.bank.push(card);
         },
 
-        playProperty: (G, ctx, cardIndex) => {
-            console.log("--- DEBUG playProperty ---");
-            console.log("Arg 1 (G):", G);
-            console.log("Arg 2 (ctx):", ctx);
-            console.log("Arg 3 (cardIndex):", cardIndex);
+        playProperty: ({ G, ctx }, cardIndex) => {
+            const playerID = ctx.currentPlayer;
+            const player = G.players[playerID];
 
-            // --- CRITICAL FIX ATTEMPT ---
-            // Sometimes frameworks pass (G, ctx) and sometimes (ctx) is merged?
-            // We will check if 'ctx' is actually inside 'G' or if arguments are shifted.
-
-            let safeCtx = ctx;
-            let safeG = G;
-
-            // Check if G is actually the context (Argument Shift)
-            if (G && G.currentPlayer && !ctx) {
-                console.warn("⚠️ Arguments seem shifted! G is acting as CTX.");
-                safeCtx = G;
-                safeG = undefined; // This would be bad
-            }
-
-            if (!safeCtx) {
-                console.error("⛔ CTX IS DEAD. Cannot proceed.");
-                return;
-            }
-
-            const playerID = safeCtx.currentPlayer;
-            const player = safeG.players[playerID];
-
-            if (!player) { console.error("Player not found for ID:", playerID); return; }
-
-            // SAFETY: Check card
-            if (cardIndex === undefined || cardIndex === null) {
-                console.error("Card Index is missing!");
-                return;
-            }
+            if (!player) return;
 
             const card = player.hand[cardIndex];
-            if (!card) {
-                console.error("Card is undefined at index:", cardIndex);
-                return;
-            }
-
-            // EXECUTE
+            // Ensure properties exists
             if (!player.properties) player.properties = [];
+
+            // Execute Move
             player.hand.splice(cardIndex, 1);
             player.properties.push(card);
-            console.log("✅ Moved card to Property Zone");
         },
 
-        playAction: (G, ctx, cardIndex) => {
+        playAction: ({ G, ctx }, cardIndex) => {
             const player = G.players[ctx.currentPlayer];
             const card = player.hand[cardIndex];
             player.hand.splice(cardIndex, 1);
             G.discardPile.push(card);
         },
 
-        drawCard: (G, ctx) => {
-            const card = G.deck.pop();
-            G.players[ctx.currentPlayer].hand.push(card);
+        drawCard: ({ G, ctx }) => {
+            if (G.deck.length > 0) {
+                const card = G.deck.pop();
+                G.players[ctx.currentPlayer].hand.push(card);
+            }
         },
 
-        endTurn: (ctx) => {
-            ctx.events.endTurn();
+        endTurn: ({ events }) => {
+            events.endTurn();
         },
     },
 
