@@ -33,47 +33,56 @@ export const DhandhoGame = {
             const player = G.players[ctx.currentPlayer];
             if (!player) return;
 
-            const card = player.hand[cardIndex];
+            const originalCard = player.hand[cardIndex];
+            if (!originalCard) return;
 
-            // --- FORCE ARRAY TYPE ---
-            if (!Array.isArray(player.bank)) {
-                player.bank = [];
-            }
+            // CLONE
+            const cardCopy = { ...originalCard };
+
+            if (!Array.isArray(player.bank)) player.bank = [];
 
             player.hand.splice(cardIndex, 1);
-            player.bank.push(card);
+            player.bank.push(cardCopy);
+            console.log(`✅ Banked: ${cardCopy.name}`);
         },
 
         playProperty: ({ G, ctx }, cardIndex) => {
             const player = G.players[ctx.currentPlayer];
             if (!player) return;
 
-            const card = player.hand[cardIndex];
+            const originalCard = player.hand[cardIndex];
+            if (!originalCard) {
+                console.error("❌ Card not found at index", cardIndex);
+                return;
+            }
 
-            // --- FORCE ARRAY TYPE ---
-            // This fixes "properties.push is not a function"
+            // CLONE
+            const cardCopy = { ...originalCard };
+
+            // FORCE ARRAY
             if (!Array.isArray(player.properties)) {
                 console.warn("⚠️ Fixed corrupted properties array");
                 player.properties = [];
             }
 
             player.hand.splice(cardIndex, 1);
-            player.properties.push(card);
+            player.properties.push(cardCopy);
+            console.log(`✅ Built Property: ${cardCopy.name}`);
         },
 
         playAction: ({ G, ctx }, cardIndex) => {
             const player = G.players[ctx.currentPlayer];
             if (!player) return;
 
-            const card = player.hand[cardIndex];
+            const originalCard = player.hand[cardIndex];
+            if (!originalCard) return;
 
-            // Force discardPile array
-            if (!Array.isArray(G.discardPile)) {
-                G.discardPile = [];
-            }
+            const cardCopy = { ...originalCard };
+
+            if (!Array.isArray(G.discardPile)) G.discardPile = [];
 
             player.hand.splice(cardIndex, 1);
-            G.discardPile.push(card);
+            G.discardPile.push(cardCopy);
         },
 
         drawCard: ({ G, ctx }) => {
