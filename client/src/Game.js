@@ -1,4 +1,6 @@
-const DhandhoGame = {
+// client/src/Game.js
+
+export const DhandhoGame = {
     name: 'dhandho',
 
     // 1. SETUP: Initialize the state correctly
@@ -7,7 +9,7 @@ const DhandhoGame = {
             { id: 'mumbai', name: 'Mumbai', type: 'PROPERTY', color: 'green', value: 4 },
             { id: 'delhi', name: 'Delhi', type: 'PROPERTY', color: 'red', value: 3 },
             { id: 'bangalore', name: 'Bangalore', type: 'PROPERTY', color: 'yellow', value: 3 },
-            { id: 'indranagar', name: 'Indranagar', type: 'PROPERTY', color: 'blue', value: 4 }, // Ensure Indranagar has data
+            { id: 'indranagar', name: 'Indranagar', type: 'PROPERTY', color: 'blue', value: 4 },
             { id: 'money_5m', name: 'Cash', type: 'MONEY', value: 5 },
             { id: 'deal_breaker', name: 'Deal Breaker', type: 'ACTION', value: 5 },
         ],
@@ -20,7 +22,7 @@ const DhandhoGame = {
                     { id: 'money_2m', name: 'Cash', type: 'MONEY', value: 2 }
                 ],
                 bank: [],
-                properties: [] // <--- CRITICAL: Must be initialized as empty array
+                properties: []
             },
             '1': {
                 hand: [],
@@ -61,7 +63,6 @@ const DhandhoGame = {
         },
 
         drawCard: (G, ctx) => {
-            // Basic draw logic
             if (G.deck.length > 0) {
                 const card = G.deck.pop();
                 G.players[ctx.currentPlayer].hand.push(card);
@@ -76,8 +77,6 @@ const DhandhoGame = {
     // 3. TURN: Basic turn structure
     turn: {
         minMoves: 0,
-        maxMoves: 3, // Limit to 3 moves per turn
+        maxMoves: 3,
     },
 };
-
-module.exports = { DhandhoGame };
