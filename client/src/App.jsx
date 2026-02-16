@@ -53,35 +53,42 @@ const DhandhoBoard = ({ ctx, G, moves, playerID }) => {
 
     if (!over) return;
 
-    // Get the Card Object to check its type
+    // Get the Card Object
     const cardIndex = active.id;
     const card = myPlayer.hand[cardIndex];
 
-    console.log(`Trying to drop ${card.name} into ${over.id}`);
+    if (!card) return; // Safety check
+
+    // --- NORMALIZE DATA (The Fix) ---
+    // Convert type to Uppercase so it matches "PROPERTY" or "property"
+    const safeType = (card.type || '').toUpperCase();
+
+    console.log(`Dropping ${card.name} (${safeType}) into ${over.id}`);
 
     // --- LOGIC: BANK ZONE ---
     if (over.id === 'zone-bank') {
-      // Rule: Any card with a value can be banked
-      if (card.value) {
+      // 1. Is it Money or Action? (Properties usually can't be banked directly in strict rules)
+      // 2. Does it have value?
+      if (card.value && (safeType === 'MONEY' || safeType === 'ACTION')) {
         moves.playMoney(cardIndex);
       } else {
-        alert("This card has no value, cannot be banked!");
+        alert("Only Money or Action cards can be banked!");
       }
     }
 
     // --- LOGIC: PROPERTY ZONE ---
     else if (over.id === 'zone-properties') {
-      // Rule: Only Properties (or Wildcards) go here
-      if (card.type === 'property' || card.type === 'wildcard') {
+      // Now checking against UPPERCASE
+      if (safeType === 'PROPERTY' || safeType === 'WILDCARD') {
         moves.playProperty(cardIndex);
       } else {
-        alert("This is not a property!");
+        alert(`This is a ${safeType} card, not a Property!`);
       }
     }
 
-    // --- LOGIC: DISCARD ZONE (Action) ---
+    // --- LOGIC: DISCARD ZONE ---
     else if (over.id === 'zone-discard') {
-      if (card.type === 'action') {
+      if (safeType === 'ACTION' || safeType === 'RENT') {
         moves.playAction(cardIndex);
       } else {
         alert("Only Action cards can be played here!");
