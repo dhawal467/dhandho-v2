@@ -53,42 +53,63 @@ const DhandhoBoard = ({ ctx, G, moves, playerID }) => {
 
     if (!over) return;
 
-    // Get the Card Object
     const cardIndex = active.id;
     const card = myPlayer.hand[cardIndex];
 
-    if (!card) return; // Safety check
+    if (!card) return;
 
-    // --- NORMALIZE DATA (The Fix) ---
-    // Convert type to Uppercase so it matches "PROPERTY" or "property"
+    // --- 1. NORMALIZE DATA ---
     const safeType = (card.type || '').toUpperCase();
+    const safeColor = (card.color || '').toUpperCase();
+    const safeName = (card.name || '').toUpperCase();
 
-    console.log(`Dropping ${card.name} (${safeType}) into ${over.id}`);
+    console.log(`Checking ${card.name}: Type=${safeType}, Color=${safeColor}`);
 
-    // --- LOGIC: BANK ZONE ---
+    // --- 2. IDENTIFY CARD CATEGORY ---
+
+    // Is it strictly an Action, Money, or Rent card?
+    const isAction = safeType === 'ACTION' || safeType === 'RENT';
+    const isMoney = safeType === 'MONEY';
+
+    // Is it a Property?
+    // Rule: It MUST be type PROPERTY/WILDCARD...
+    // ...OR it must have a valid color AND NOT be an Action/Money card.
+    const validPropertyColors = ['BROWN', 'BLUE', 'DARKBLUE', 'GREEN', 'YELLOW', 'RED', 'ORANGE', 'PINK', 'LIGHTBLUE', 'RAILROAD', 'UTILITY', 'BLACK'];
+
+    let isProperty = safeType.includes('PROP') || safeType === 'WILDCARD';
+
+    // Backup: If type is missing, check color, BUT ensure it's not an Action
+    if (!isProperty && !isAction && !isMoney) {
+      if (validPropertyColors.includes(safeColor)) {
+        isProperty = true;
+      }
+    }
+
+    // --- 3. ZONE LOGIC ---
+
+    // BANK ZONE
     if (over.id === 'zone-bank') {
-      // 1. Is it Money or Action? (Properties usually can't be banked directly in strict rules)
-      // 2. Does it have value?
-      if (card.value && (safeType === 'MONEY' || safeType === 'ACTION')) {
+      // Money goes here. Action cards WITH VALUE can go here too.
+      // Properties usually cannot (unless played as money, but let's stick to standard rules for now).
+      if (isMoney || (isAction && card.value)) {
         moves.playMoney(cardIndex);
       } else {
-        alert("Only Money or Action cards can be banked!");
+        alert("This card cannot be banked!");
       }
     }
 
-    // --- LOGIC: PROPERTY ZONE ---
+    // PROPERTY ZONE
     else if (over.id === 'zone-properties') {
-      // Now checking against UPPERCASE
-      if (safeType === 'PROPERTY' || safeType === 'WILDCARD') {
+      if (isProperty) {
         moves.playProperty(cardIndex);
       } else {
-        alert(`This is a ${safeType} card, not a Property!`);
+        alert("This is NOT a Property! You cannot build it.");
       }
     }
 
-    // --- LOGIC: DISCARD ZONE ---
+    // DISCARD ZONE (Playing an Action)
     else if (over.id === 'zone-discard') {
-      if (safeType === 'ACTION' || safeType === 'RENT') {
+      if (isAction) {
         moves.playAction(cardIndex);
       } else {
         alert("Only Action cards can be played here!");
