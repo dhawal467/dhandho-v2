@@ -53,16 +53,40 @@ const DhandhoBoard = ({ ctx, G, moves, playerID }) => {
 
     if (!over) return;
 
-    // DEBUG: Alert to prove it works
-    const cardName = myPlayer.hand[active.id]?.name || "Unknown Card";
-    alert(`SUCCESS! You dropped ${cardName} onto ${over.id}`);
+    // Get the Card Object to check its type
+    const cardIndex = active.id;
+    const card = myPlayer.hand[cardIndex];
 
-    // LOGIC PLACEHOLDER (We will add real moves next)
-    /*
-    if (over.id === 'zone-bank') moves.playMoney(active.id);
-    if (over.id === 'zone-properties') moves.playProperty(active.id);
-    if (over.id === 'zone-discard') moves.playAction(active.id);
-    */
+    console.log(`Trying to drop ${card.name} into ${over.id}`);
+
+    // --- LOGIC: BANK ZONE ---
+    if (over.id === 'zone-bank') {
+      // Rule: Any card with a value can be banked
+      if (card.value) {
+        moves.playMoney(cardIndex);
+      } else {
+        alert("This card has no value, cannot be banked!");
+      }
+    }
+
+    // --- LOGIC: PROPERTY ZONE ---
+    else if (over.id === 'zone-properties') {
+      // Rule: Only Properties (or Wildcards) go here
+      if (card.type === 'property' || card.type === 'wildcard') {
+        moves.playProperty(cardIndex);
+      } else {
+        alert("This is not a property!");
+      }
+    }
+
+    // --- LOGIC: DISCARD ZONE (Action) ---
+    else if (over.id === 'zone-discard') {
+      if (card.type === 'action') {
+        moves.playAction(cardIndex);
+      } else {
+        alert("Only Action cards can be played here!");
+      }
+    }
   };
 
   return (
